@@ -1,6 +1,6 @@
 module "eks" {
   source                        = "../../module/eks"
-  env                           = "production"
+  env                           = "stagings"
   is_eks_role_enabled           = true
   is_eks_nodegroup_role_enabled = true
   cidr-block                    = "10.0.0.0/16"
