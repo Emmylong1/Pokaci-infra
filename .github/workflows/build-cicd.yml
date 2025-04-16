@@ -2,9 +2,9 @@ name: E-commerce CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, staging ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, staging ]
+    branches: [ main ]
 
 jobs:
   test-backend:
@@ -87,11 +87,11 @@ jobs:
       - name: Run tests
         run: npm test || echo "Tests skipped"
 
-  build-and-push-staging:
-    name: Build and Push Staging Image
+  build-and-push:
+    name: Build and Push Docker Image
     needs: [test-backend, test-frontend]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/staging'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v3
       
@@ -103,105 +103,12 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      
-      - name: Check if Dockerfile exists
-        id: check_dockerfile
-        run: |
-          if [ -f Dockerfile ]; then
-            echo "DOCKERFILE=./Dockerfile" >> $GITHUB_ENV
-          else
-            echo "Creating a basic Dockerfile"
-            echo "FROM python:3.10-slim" > Dockerfile
-            echo "WORKDIR /app" >> Dockerfile
-            echo "COPY . ." >> Dockerfile
-            echo "RUN pip install --no-cache-dir -r requirements.txt || echo 'No requirements to install'" >> Dockerfile
-            echo "EXPOSE 8000" >> Dockerfile
-            echo "CMD [\"python\", \"-m\", \"http.server\", \"8000\"]" >> Dockerfile
-            echo "DOCKERFILE=./Dockerfile" >> $GITHUB_ENV
-          fi
           
-      - name: Build and push staging image
+      - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: ${{ env.DOCKERFILE }}
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-app:staging
-            ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-app:staging-${{ github.sha }}
-      
-      - name: Configure Git for auto-promotion
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            // Auto-promote to main if tests and build pass
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            
-            // Create PR from staging to main
-            const { data: pr } = await github.rest.pulls.create({
-              owner,
-              repo,
-              title: 'Auto-promotion from staging to main',
-              head: 'staging',
-              base: 'main',
-              body: 'This PR was automatically created by the CI/CD pipeline after successful tests and build on staging.',
-            });
-            
-            // Auto-merge the PR if possible
-            try {
-              await github.rest.pulls.merge({
-                owner,
-                repo,
-                pull_number: pr.number,
-                merge_method: 'merge'
-              });
-              console.log(`Successfully auto-merged PR #${pr.number}`);
-            } catch (error) {
-              console.log(`Could not auto-merge PR #${pr.number}: ${error.message}`);
-              console.log('This could be due to branch protection rules or merge conflicts.');
-            }
-
-  build-and-push-production:
-    name: Build and Push Production Image
-    needs: [test-backend, test-frontend]
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-        
-      - name: Login to DockerHub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      
-      - name: Check if Dockerfile exists
-        run: |
-          if [ -f Dockerfile ]; then
-            echo "DOCKERFILE=./Dockerfile" >> $GITHUB_ENV
-          else
-            echo "Creating a basic Dockerfile"
-            echo "FROM python:3.10-slim" > Dockerfile
-            echo "WORKDIR /app" >> Dockerfile
-            echo "COPY . ." >> Dockerfile
-            echo "RUN pip install --no-cache-dir -r requirements.txt || echo 'No requirements to install'" >> Dockerfile
-            echo "EXPOSE 8000" >> Dockerfile
-            echo "CMD [\"python\", \"-m\", \"http.server\", \"8000\"]" >> Dockerfile
-            echo "DOCKERFILE=./Dockerfile" >> $GITHUB_ENV
-          fi
-          
-      - name: Build and push production image
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: ${{ env.DOCKERFILE }}
-          push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-app:production
-            ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-app:production-${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-app:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-app:${{ github.sha }}
