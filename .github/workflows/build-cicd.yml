@@ -1,0 +1,154 @@
+name: E-commerce CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, staging ]
+  pull_request:
+    branches: [ staging ]
+  workflow_dispatch:
+    inputs:
+      promote_to_production:
+        description: 'Promote staging to production'
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  test-backend:
+    name: Test Python Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Lint with flake8
+        run: |
+          pip install flake8
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+      
+      - name: Run tests
+        run: |
+          pytest
+
+  test-frontend:
+    name: Test JavaScript Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Lint
+        run: npm run lint
+      
+      - name: Run tests
+        run: npm test
+
+  build-and-push-staging:
+    name: Build and Push Staging Image
+    needs: [test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/staging'
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          
+      - name: Build and push staging image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-app:staging
+            ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-app:staging-${{ github.sha }}
+      
+      - name: Add staging tag to GitHub
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/staging-${{ github.sha }}',
+              sha: context.sha
+            })
+
+  promote-to-production:
+    name: Promote to Production
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.promote_to_production == 'true') ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    steps:
+      - uses: actions/checkout@v3
+        
+      - name: Merge staging into main if manual promotion
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.promote_to_production == 'true'
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          git fetch origin staging
+          git checkout main
+          git merge origin/staging
+          git push origin main
+      
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Get latest staging tag
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.promote_to_production == 'true'
+        id: get_staging_tag
+        run: |
+          LATEST_TAG=$(git describe --tags --match "staging-*" --abbrev=0)
+          COMMIT_SHA=${LATEST_TAG#staging-}
+          echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_ENV
+      
+      - name: Pull staging image and retag for production
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.promote_to_production == 'true'
+        run: |
+          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-app:staging-${{ env.COMMIT_SHA }}
+          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-app:staging-${{ env.COMMIT_SHA }} ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-app:production
+          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-app:staging-${{ env.COMMIT_SHA }} ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-app:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-app:production
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-app:latest
+      
+      - name: Build and push production image directly
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-app:production
+            ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-app:production-${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-app:latest
