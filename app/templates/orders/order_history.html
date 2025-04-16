@@ -1,0 +1,67 @@
+<!-- app/templates/orders/order_history.html -->
+{% extends 'base.html' %}
+
+{% block title %}Order History - Emmanuelibok{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Order History</h1>
+
+{% if orders %}
+    <div class="accordion" id="ordersAccordion">
+        {% for order in orders %}
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading{{ order.id }}">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ order.id }}" aria-expanded="false" aria-controls="collapse{{ order.id }}">
+                    <div class="d-flex justify-content-between w-100 me-3">
+                        <span>Order #{{ order.id }}</span>
+                        <span>{{ order.created_at.strftime('%B %d, %Y') }}</span>
+                        <span>${{ "%.2f"|format(order.total_amount) }}</span>
+                        <span class="badge bg-{{ 'success' if order.status == 'paid' else 'warning' }}">{{ order.status }}</span>
+                    </div>
+                </button>
+            </h2>
+            <div id="collapse{{ order.id }}" class="accordion-collapse collapse" aria-labelledby="heading{{ order.id }}" data-bs-parent="#ordersAccordion">
+                <div class="accordion-body">
+                    <h5>Order Items</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Price</th>
+                                    <th>Quantity</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order.items %}
+                                <tr>
+                                    <td>{{ item.product.name }}</td>
+                                    <td>${{ "%.2f"|format(item.price) }}</td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>${{ "%.2f"|format(item.price * item.quantity) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-end fw-bold">Order Total:</td>
+                                    <td class="fw-bold">${{ "%.2f"|format(order.total_amount) }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        <p>You haven't placed any orders yet.</p>
+        <a href="{{ url_for('products.index') }}" class="btn btn-primary mt-3">
+            <i class="bi bi-arrow-left"></i> Start Shopping
+        </a>
+    </div>
+{% endif %}
+{% endblock %}

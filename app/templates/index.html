@@ -1,0 +1,110 @@
+<!-- app/templates/index.html -->
+{% extends 'base.html' %}
+
+{% block title %}Emmanuelibok - Home{% endblock %}
+
+{% block content %}
+<section class="hero-section mb-5">
+    <div class="p-5 text-center bg-dark text-white rounded">
+        <h1 class="display-4">Welcome to EmmanuelIbokStore</h1>
+        <p class="lead">Your one-stop shop for amazing products!</p>
+        <hr class="my-4">
+        <p>Discover quality products at competitive prices.</p>
+        <a class="btn btn-primary btn-lg" href="#products-section" role="button">Browse Products</a>
+    </div>
+</section>
+
+<section id="products-section" class="mb-5">
+    <h2 class="text-center mb-4">Featured Products</h2>
+    
+    <div class="row">
+        {% for product in products.items %}
+            <div class="col-md-4 col-sm-6 mb-4">
+                <div class="card product-card h-100">
+                    <img src="{{ url_for('static', filename='images/' + product.image_url) }}" class="card-img-top" alt="{{ product.name }}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ product.name }}</h5>
+                        <p class="card-text price">${{ "%.2f"|format(product.price) }}</p>
+                        <p class="card-text description">{{ product.description|truncate(100) }}</p>
+                    </div>
+                    <div class="card-footer bg-white border-top-0">
+                        <a href="{{ url_for('products.detail', product_id=product.id) }}" class="btn btn-primary">View Details</a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <nav aria-label="Product pagination">
+        <ul class="pagination justify-content-center">
+            {% if products.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('products.index', page=products.prev_num) }}">Previous</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Previous</span>
+                </li>
+            {% endif %}
+            
+            {% for page_num in products.iter_pages() %}
+                {% if page_num %}
+                    <li class="page-item {{ 'active' if page_num == products.page else '' }}">
+                        <a class="page-link" href="{{ url_for('products.index', page=page_num) }}">{{ page_num }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if products.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('products.index', page=products.next_num) }}">Next</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Next</span>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+</section>
+
+<section class="features-section mb-5">
+    <h2 class="text-center mb-4">Why Choose EmmanuelibokStore?</h2>
+    
+    <div class="row text-center">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <i class="bi bi-truck display-4 text-primary"></i>
+                    <h5 class="card-title mt-3">Fast Delivery</h5>
+                    <p class="card-text">Get your products delivered quickly to your doorstep.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <i class="bi bi-shield-check display-4 text-primary"></i>
+                    <h5 class="card-title mt-3">Secure Payments</h5>
+                    <p class="card-text">Your transactions are protected with the highest security standards.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <i class="bi bi-arrow-repeat display-4 text-primary"></i>
+                    <h5 class="card-title mt-3">Easy Returns</h5>
+                    <p class="card-text">Not satisfied? Return your products hassle-free within 30 days.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

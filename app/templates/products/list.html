@@ -1,0 +1,132 @@
+<!-- app/templates/products/list.html -->
+{% extends 'base.html' %}
+
+{% block title %}All Products - Emmanuelibok{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>All Products</h1>
+        </div>
+        <div class="col-md-4">
+            <form class="d-flex" action="{{ url_for('products.search') }}" method="get">
+                <input class="form-control me-2" type="search" name="q" placeholder="Search products..." aria-label="Search" value="{{ request.args.get('q', '') }}">
+                <button class="btn btn-outline-primary" type="submit">Search</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-3">
+            <!-- Filters -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Filters</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('products.list') }}" method="get">
+                        <div class="mb-3">
+                            <label for="price-range" class="form-label">Price Range</label>
+                            <div class="d-flex">
+                                <input type="number" class="form-control me-2" name="min_price" placeholder="Min" value="{{ request.args.get('min_price', '') }}">
+                                <input type="number" class="form-control" name="max_price" placeholder="Max" value="{{ request.args.get('max_price', '') }}">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Sort By</label>
+                            <select class="form-select" name="sort">
+                                <option value="newest" {% if request.args.get('sort') == 'newest' %}selected{% endif %}>Newest</option>
+                                <option value="price_low" {% if request.args.get('sort') == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                                <option value="price_high" {% if request.args.get('sort') == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                                <option value="name_asc" {% if request.args.get('sort') == 'name_asc' %}selected{% endif %}>Name: A to Z</option>
+                                <option value="name_desc" {% if request.args.get('sort') == 'name_desc' %}selected{% endif %}>Name: Z to A</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="in-stock" name="in_stock" value="1" {% if request.args.get('in_stock') %}checked{% endif %}>
+                                <label class="form-check-label" for="in-stock">
+                                    In Stock Only
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <!-- Products Grid -->
+            <div class="row">
+                {% if products.items %}
+                    {% for product in products.items %}
+                        <div class="col-md-4 col-sm-6 mb-4">
+                            <div class="card product-card h-100">
+                                <img src="{{ url_for('static', filename='images/' + product.image_url) }}" class="card-img-top" alt="{{ product.name }}">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ product.name }}</h5>
+                                    <p class="card-text price">${{ "%.2f"|format(product.price) }}</p>
+                                    <p class="card-text description">{{ product.description|truncate(100) }}</p>
+                                </div>
+                                <div class="card-footer bg-white border-top-0">
+                                    <a href="{{ url_for('products.detail', product_id=product.id) }}" class="btn btn-primary">View Details</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            No products found matching your criteria.
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if products.pages > 1 %}
+                <nav aria-label="Product pagination" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if products.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('products.list', page=products.prev_num, **request.args) }}">Previous</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">Previous</span>
+                            </li>
+                        {% endif %}
+                        
+                        {% for page_num in products.iter_pages() %}
+                            {% if page_num %}
+                                <li class="page-item {{ 'active' if page_num == products.page else '' }}">
+                                    <a class="page-link" href="{{ url_for('products.list', page=page_num, **request.args) }}">{{ page_num }}</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if products.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('products.list', page=products.next_num, **request.args) }}">Next</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">Next</span>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
