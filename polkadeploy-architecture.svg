@@ -88,7 +88,7 @@
   
   <!-- Monitoring & Alerts Section -->
   <rect x="550" y="270" width="200" height="175" fill="#f2e6ff" stroke="#6600cc" stroke-width="2" rx="10" />
-  <text x="650" y="290" font-family="Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle">Monitoring & Alerts</text>
+  <text x="650" y="290" font-family="Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle">Monitoring &amp; Alerts</text>
   
   <rect x="570" y="300" width="160" height="30" fill="#ffffff" stroke="#6600cc" stroke-width="1" rx="5" />
   <text x="650" y="320" font-family="Arial, sans-serif" font-size="12" text-anchor="middle">Prometheus</text>
@@ -197,7 +197,7 @@
   <text x="740" y="635" font-family="Arial, sans-serif" font-size="12" text-anchor="start">Blockchain Environments</text>
   
   <rect x="710" y="645" width="20" height="20" fill="#f2e6ff" stroke="#6600cc" stroke-width="1" />
-  <text x="740" y="660" font-family="Arial, sans-serif" font-size="12" text-anchor="start">Monitoring & Alerts</text>
+  <text x="740" y="660" font-family="Arial, sans-serif" font-size="12" text-anchor="start">Monitoring &amp; Alerts</text>
   
   <!-- Footer -->
   <text x="500" y="780" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle">PolkaDeploy: DevOps Infrastructure Toolkit for Polkadot</text>
