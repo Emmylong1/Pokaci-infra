@@ -81,7 +81,7 @@ jobs:
     env:
       APP_ENV: production
       API_KEY: ${{ secrets.API_KEY }}
-      DOCKERFILE_PATH: ./Dockerfile
+      DOCKERFILE_PATH: ../Dockerfile
       IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-app
     steps:
       - uses: actions/checkout@v3
