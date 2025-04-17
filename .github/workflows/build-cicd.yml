@@ -91,7 +91,6 @@ jobs:
     name: Build and Push Docker Image
     needs: [test-backend, test-frontend]
     runs-on: ubuntu-latest
-    # Modified: removed condition so it always runs after tests
     steps:
       - uses: actions/checkout@v3
       
