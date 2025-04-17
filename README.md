@@ -1,3 +1,3 @@
 # PolkaDeploy Architecture
 
-![PolkaDeploy Architecture](./polkadeploy-architecture.svg)
+![PolkaDeploy Architecture](https://raw.githubusercontent.com/Emmylong1/Pokaci-infra/main/polkadeploy-architecture.svg)
