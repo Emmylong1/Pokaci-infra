@@ -61,9 +61,11 @@ jobs:
       - name: Install dependencies
         run: |
           if [ -f package-lock.json ]; then
-            npm ci
+            npm ci  # If lock file exists, use npm ci
+          elif [ -f yarn.lock ]; then
+            yarn install  # If yarn.lock exists, use yarn
           else
-            npm install
+            npm install  # Fallback to npm install if no lock file is found
           fi
 
       - name: Lint
