@@ -45,32 +45,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
+      
       - name: Check for package.json
+        id: check_package
         run: |
-          if [ ! -f package.json ]; then
-            echo '{"name":"temp","scripts":{"lint":"echo No lint","test":"echo No test"}}' > package.json
+          if [ -f package.json ]; then
+            echo "PACKAGE_EXISTS=true" >> $GITHUB_ENV
+          else
+            echo "PACKAGE_EXISTS=false" >> $GITHUB_ENV
+            echo "Creating minimal package.json to avoid errors"
+            echo '{"name":"temp","scripts":{"lint":"echo No lint configured","test":"echo No tests configured"}}' > package.json
           fi
-
+      
       - name: Setup Node.js
+        if: env.PACKAGE_EXISTS == 'true'
         uses: actions/setup-node@v3
         with:
           node-version: '18'
           cache: 'npm'
-
+      
       - name: Install dependencies
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci  # If lock file exists, use npm ci
-          elif [ -f yarn.lock ]; then
-            yarn install  # If yarn.lock exists, use yarn
-          else
-            npm install  # Fallback to npm install if no lock file is found
-          fi
-
+        if: env.PACKAGE_EXISTS == 'true'
+        run: npm ci || npm install
+      
       - name: Lint
         run: npm run lint || echo "Lint skipped"
-
+      
       - name: Run tests
         run: npm test || echo "Tests skipped"
 
