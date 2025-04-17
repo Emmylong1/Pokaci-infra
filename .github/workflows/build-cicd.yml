@@ -26,7 +26,7 @@ jobs:
             pip install -r requirements.txt
           else
             pip install pytest flake8
-            f1
+          fi
 
       - name: Lint with flake8
         run: |
@@ -50,6 +50,7 @@ jobs:
         run: |
           if [ ! -f package.json ]; then
             echo '{"name":"temp","scripts":{"lint":"echo No lint","test":"echo No test"}}' > package.json
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
