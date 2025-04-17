@@ -7,6 +7,6 @@ spec:
     app: pokaci-infra
   ports:
     - port: 80
-      targetPort: 5000
+      targetPort: 8000
       protocol: TCP
   type: LoadBalancer

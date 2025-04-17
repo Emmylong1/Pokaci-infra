@@ -24,4 +24,4 @@ spec:
       - name: pokaci-infra
         image: emmylong1/ecommerce-app:latest
         ports:
-        - containerPort: 5000
+        - containerPort: 8000
