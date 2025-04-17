@@ -1,6 +1,5 @@
-# Pokaci-infra
-
-<svg viewBox="0 0 1000 800" xmlns="http://www.w3.org/2000/svg">
+<!-- PolkaDeploy Architecture Diagram for GitHub README -->
+<svg width="1000" height="800" xmlns="http://www.w3.org/2000/svg">
   <!-- Background -->
   <rect width="1000" height="800" fill="#f8f9fa" />
   
